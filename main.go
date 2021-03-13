@@ -1,23 +1,31 @@
 package main
 
 import (
-    "fmt"
-    "net/http"
+	"fmt"
+	"io/ioutil"
+	"net/http"
+	"strconv"
 )
 
 func main() {
-	resp, err := http.Get("https://jsonplaceholder.typicode.com/posts") 
-	if err != nil { 
-		fmt.Println(err) 
-		return 
-	} 
-	defer resp.Body.Close()
-	for true {
-		bs := make([]byte, 1024)
-		n, err := resp.Body.Read(bs)
-		fmt.Print(string(bs[:n]))
-		if n == 0 || err != nil{
-			break
-		}
+	ch := make(chan string)
+	var res string
+	for i := 0; i < 100; i++ {
+		go MakeRequest("https://jsonplaceholder.typicode.com/posts/"+strconv.Itoa(i), ch)
 	}
+	for i := 0; i < 100; i++ {
+		res += <-ch
+	}
+	fmt.Print(res)
+}
+
+func MakeRequest(url string, ch chan string) {
+	resp, err := http.Get(url)
+	if err != nil {
+		fmt.Println(err)
+		panic("http error")
+	}
+	defer resp.Body.Close()
+	body, _ := ioutil.ReadAll(resp.Body)
+	ch <- fmt.Sprint(string(body))
 }
