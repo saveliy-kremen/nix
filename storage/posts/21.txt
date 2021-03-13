@@ -1,6 +1,4 @@
-{
-  "userId": 10,
-  "id": 96,
-  "title": "quaerat velit veniam amet cupiditate aut numquam ut sequi",
-  "body": "in non odio excepturi sint eum\nlabore voluptates vitae quia qui et\ninventore itaque rerum\nveniam non exercitationem delectus aut"
-}
+{UserID:6 Id:54 Title:sit asperiores ipsam eveniet odio non quia Body:totam corporis dignissimos
+vitae dolorem ut occaecati accusamus
+ex velit deserunt
+et exercitationem vero incidunt corrupti mollitia}

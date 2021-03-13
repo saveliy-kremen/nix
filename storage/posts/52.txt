@@ -1,6 +1,4 @@
-{
-  "userId": 7,
-  "id": 70,
-  "title": "voluptatem laborum magni",
-  "body": "sunt repellendus quae\nest asperiores aut deleniti esse accusamus repellendus quia aut\nquia dolorem unde\neum tempora esse dolore"
-}
+{UserID:1 Id:7 Title:magnam facilis autem Body:dolore placeat quibusdam ea quo vitae
+magni quis enim qui quis quo nemo aut saepe
+quidem repellat excepturi ut quia
+sunt ut sequi eos ea sed quas}

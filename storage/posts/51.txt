@@ -1,6 +1,4 @@
-{
-  "userId": 7,
-  "id": 69,
-  "title": "fugiat quod pariatur odit minima",
-  "body": "officiis error culpa consequatur modi asperiores et\ndolorum assumenda voluptas et vel qui aut vel rerum\nvoluptatum quisquam perspiciatis quia rerum consequatur totam quas\nsequi commodi repudiandae asperiores et saepe a"
-}
+{UserID:1 Id:6 Title:dolorem eum magni eos aperiam quia Body:ut aspernatur corporis harum nihil quis provident sequi
+mollitia nobis aliquid molestiae
+perspiciatis et ea nemo ab reprehenderit accusantium quas
+voluptate dolores velit et doloremque molestiae}

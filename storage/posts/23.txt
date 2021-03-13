@@ -1,6 +1,4 @@
-{
-  "userId": 6,
-  "id": 51,
-  "title": "soluta aliquam aperiam consequatur illo quis voluptas",
-  "body": "sunt dolores aut doloribus\ndolore doloribus voluptates tempora et\ndoloremque et quo\ncum asperiores sit consectetur dolorem"
-}
+{UserID:6 Id:55 Title:sit vel voluptatem et non libero Body:debitis excepturi ea perferendis harum libero optio
+eos accusamus cum fuga ut sapiente repudiandae
+et ut incidunt omnis molestiae
+nihil ut eum odit}

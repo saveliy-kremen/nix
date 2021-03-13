@@ -1,6 +1,4 @@
-{
-  "userId": 5,
-  "id": 50,
-  "title": "repellendus qui recusandae incidunt voluptates tenetur qui omnis exercitationem",
-  "body": "error suscipit maxime adipisci consequuntur recusandae\nvoluptas eligendi et est et voluptates\nquia distinctio ab amet quaerat molestiae et vitae\nadipisci impedit sequi nesciunt quis consectetur"
-}
+{UserID:1 Id:4 Title:eum et est occaecati Body:ullam et saepe reiciendis voluptatem adipisci
+sit amet autem assumenda provident rerum culpa
+quis hic commodi nesciunt rem tenetur doloremque ipsam iure
+quis sunt voluptatem rerum illo velit}
