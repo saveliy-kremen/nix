@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -9,7 +8,8 @@ import (
 	"strconv"
 	"sync"
 
-	_ "github.com/go-sql-driver/mysql"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 )
 
 type Post struct {
@@ -27,12 +27,16 @@ type Comment struct {
 	Body   string
 }
 
+var db *gorm.DB
+
 func main() {
-	db, err := sql.Open("mysql", "Stas_nixuser:edUfw5nxpT@tcp(192.168.1.1:3306)/Stas_nix")
+	var err error
+	dsn := "Stas_nixuser:edUfw5nxpT@tcp(192.168.1.1:3306)/Stas_nix?charset=utf8mb4&parseTime=True&loc=Local"
+	db, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
-		panic(err.Error())
+		fmt.Println(err)
+		panic("gorm error")
 	}
-	defer db.Close()
 
 	// _, err = db.Exec("CREATE TABLE posts ( user_id integer, id integer, title text, body text, PRIMARY KEY (id))")
 	// if err != nil {
@@ -60,16 +64,16 @@ func main() {
 	var wgPosts sync.WaitGroup
 	for _, post := range posts {
 		wgPosts.Add(1)
-		go savePost(post, db, &wgPosts)
+		go savePost(post, &wgPosts)
 	}
 	wgPosts.Wait()
 }
 
-func savePost(post Post, db *sql.DB, wg *sync.WaitGroup) {
+func savePost(post Post, wg *sync.WaitGroup) {
 	defer wg.Done()
-	_, err := db.Exec("INSERT INTO posts VALUES ( ?, ?, ?, ? )", post.UserID, post.Id, post.Title, post.Body)
-	if err != nil {
-		panic(err.Error())
+	result := db.Create(&post)
+	if result.Error != nil {
+		panic(result.Error.Error())
 	}
 	resp, err := http.Get("https://jsonplaceholder.typicode.com/comments?postId=" + strconv.Itoa(post.Id))
 	if err != nil {
@@ -85,15 +89,15 @@ func savePost(post Post, db *sql.DB, wg *sync.WaitGroup) {
 	var wgComments sync.WaitGroup
 	for _, comment := range comments {
 		wgComments.Add(1)
-		go saveComment(comment, db, &wgComments)
+		go saveComment(comment, &wgComments)
 	}
 	wgComments.Wait()
 }
 
-func saveComment(comment Comment, db *sql.DB, wg *sync.WaitGroup) {
+func saveComment(comment Comment, wg *sync.WaitGroup) {
 	defer wg.Done()
-	_, err := db.Exec("INSERT INTO comments VALUES ( ?, ?, ?, ?, ? )", comment.PostID, comment.Id, comment.Name, comment.Email, comment.Body)
-	if err != nil {
-		panic(err.Error())
+	result := db.Create(&comment)
+	if result.Error != nil {
+		panic(result.Error.Error())
 	}
 }
