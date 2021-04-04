@@ -2,7 +2,9 @@ package main
 
 import (
 	"encoding/json"
+	"encoding/xml"
 	"fmt"
+	"github.com/davecgh/go-spew/spew"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"net/http"
@@ -52,15 +54,28 @@ func main() {
 
 
 func posts(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
+	acceptXML := r.Header.Get("Accept-xml")
+	spew.Dump(acceptXML)
 	switch r.Method {
 	case "GET":
 		id := strings.TrimPrefix(r.URL.Path, "/posts/")
 		if id == "" {
 			posts := []Post{}
 			db.Order("id desc").Find(&posts)
-			w.WriteHeader(http.StatusOK)
-			json.NewEncoder(w).Encode(posts)
+			if acceptXML == "" {
+				w.WriteHeader(http.StatusOK)
+				w.Header().Set("Content-Type", "application/json")
+				json.NewEncoder(w).Encode(posts)
+			} else {
+				xml, err := xml.MarshalIndent(posts, "", "  ")
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
+				}
+				w.WriteHeader(http.StatusOK)
+				w.Header().Set("Content-Type", "application/xml")
+				w.Write(xml)
+			}
 		} else {
 			post := Post{}
 			result := db.First(&post, id)
@@ -69,8 +84,20 @@ func posts(w http.ResponseWriter, r *http.Request) {
 				w.Write([]byte(`{"message": "post not found"}`))
 				return
 			}
-			w.WriteHeader(http.StatusOK)
-			json.NewEncoder(w).Encode(post)
+			if acceptXML == "" {
+				w.WriteHeader(http.StatusOK)
+				w.Header().Set("Content-Type", "application/json")
+				json.NewEncoder(w).Encode(post)
+			} else {
+				xml, err := xml.MarshalIndent(post, "", "  ")
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
+				}
+				w.WriteHeader(http.StatusOK)
+				w.Header().Set("Content-Type", "application/xml")
+				w.Write(xml)
+			}
 		}
 	case "POST":
 		r.ParseForm() // Parses the request body
@@ -109,8 +136,20 @@ func posts(w http.ResponseWriter, r *http.Request) {
 			w.Write([]byte(`{"message": "error post update"}`))
 			return
 		}
-		w.WriteHeader(http.StatusAccepted)
-		json.NewEncoder(w).Encode(post)
+		if acceptXML == "" {
+			w.WriteHeader(http.StatusAccepted)
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(post)
+		} else {
+			xml, err := xml.MarshalIndent(post, "", "  ")
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			w.WriteHeader(http.StatusOK)
+			w.Header().Set("Content-Type", "application/xml")
+			w.Write(xml)
+		}
 	case "DELETE":
 		id := strings.TrimPrefix(r.URL.Path, "/posts/")
 		if id == "" {
