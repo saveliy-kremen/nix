@@ -8,6 +8,7 @@ import (
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
@@ -48,33 +49,32 @@ func main() {
 	// }
 
 	http.HandleFunc("/posts/", posts)
+	http.HandleFunc("/comments/", comments)
 	fmt.Printf("Starting server at port 80\n")
 	http.ListenAndServe(":80", nil)
 }
 
-
 func posts(w http.ResponseWriter, r *http.Request) {
 	acceptXML := r.Header.Get("Accept-xml")
-	spew.Dump(acceptXML)
 	switch r.Method {
 	case "GET":
 		id := strings.TrimPrefix(r.URL.Path, "/posts/")
 		if id == "" {
-			posts := []Post{}
+			var posts []Post
 			db.Order("id desc").Find(&posts)
 			if acceptXML == "" {
 				w.WriteHeader(http.StatusOK)
 				w.Header().Set("Content-Type", "application/json")
 				json.NewEncoder(w).Encode(posts)
 			} else {
-				xml, err := xml.MarshalIndent(posts, "", "  ")
+				xmlOut, err := xml.MarshalIndent(posts, "", "  ")
 				if err != nil {
 					http.Error(w, err.Error(), http.StatusInternalServerError)
 					return
 				}
 				w.WriteHeader(http.StatusOK)
 				w.Header().Set("Content-Type", "application/xml")
-				w.Write(xml)
+				w.Write(xmlOut)
 			}
 		} else {
 			post := Post{}
@@ -89,14 +89,14 @@ func posts(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
 				json.NewEncoder(w).Encode(post)
 			} else {
-				xml, err := xml.MarshalIndent(post, "", "  ")
+				xmlOut, err := xml.MarshalIndent(post, "", "  ")
 				if err != nil {
 					http.Error(w, err.Error(), http.StatusInternalServerError)
 					return
 				}
 				w.WriteHeader(http.StatusOK)
 				w.Header().Set("Content-Type", "application/xml")
-				w.Write(xml)
+				w.Write(xmlOut)
 			}
 		}
 	case "POST":
@@ -141,14 +141,14 @@ func posts(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
 			json.NewEncoder(w).Encode(post)
 		} else {
-			xml, err := xml.MarshalIndent(post, "", "  ")
+			xmlOut, err := xml.MarshalIndent(post, "", "  ")
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
 			w.WriteHeader(http.StatusOK)
 			w.Header().Set("Content-Type", "application/xml")
-			w.Write(xml)
+			w.Write(xmlOut)
 		}
 	case "DELETE":
 		id := strings.TrimPrefix(r.URL.Path, "/posts/")
@@ -172,6 +172,109 @@ func posts(w http.ResponseWriter, r *http.Request) {
 		}
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"message": "post deleted"}`))
+	default:
+		w.WriteHeader(http.StatusNotFound)
+		w.Write([]byte(`{"message": "not found"}`))
+	}
+}
+
+func comments(w http.ResponseWriter, r *http.Request) {
+	acceptXML := r.Header.Get("Accept-xml")
+	switch r.Method {
+	case "GET":
+		postID := strings.TrimPrefix(r.URL.Path, "/comments/")
+		var comments []Comment
+		db.Where("post_id = ?", postID).Order("id desc").Find(&comments)
+		if acceptXML == "" {
+			w.WriteHeader(http.StatusOK)
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(comments)
+		} else {
+			xmlOut, err := xml.MarshalIndent(comments, "", "  ")
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			w.WriteHeader(http.StatusOK)
+			w.Header().Set("Content-Type", "application/xml")
+			w.Write(xmlOut)
+		}
+	case "POST":
+		postID, _ := strconv.Atoi(strings.TrimPrefix(r.URL.Path, "/comments/"))
+		r.ParseForm()
+		name := r.FormValue("name")
+		email:= r.FormValue("email")
+		body := r.FormValue("body")
+		comment := Comment{PostID: postID, Name: name, Email: email, Body: body}
+		spew.Dump(comment)
+		result := db.Create(&comment)
+		if result.Error == nil {
+			w.WriteHeader(http.StatusCreated)
+			w.Write([]byte(`{"message": "comment created"}`))
+		} else {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(`{"message": "error comment create"}`))
+		}
+	case "PUT":
+		id := strings.TrimPrefix(r.URL.Path, "/comments/")
+		if id == "" {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(`{"message": "comment not found"}`))
+			return
+		}
+		comment := Comment{}
+		result := db.First(&comment, id)
+		if result.Error != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(`{"message": "comment not found"}`))
+			return
+		}
+		r.ParseForm()
+		comment.Name = r.FormValue("name")
+		comment.Email = r.FormValue("email")
+		comment.Body  = r.FormValue("body")// Parses the request body
+		result = db.Save(&comment)
+		if result.Error != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(`{"message": "error comment update"}`))
+			return
+		}
+		if acceptXML == "" {
+			w.WriteHeader(http.StatusAccepted)
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(comment)
+		} else {
+			xmlOut, err := xml.MarshalIndent(comment, "", "  ")
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			w.WriteHeader(http.StatusOK)
+			w.Header().Set("Content-Type", "application/xml")
+			w.Write(xmlOut)
+		}
+	case "DELETE":
+		id := strings.TrimPrefix(r.URL.Path, "/comments/")
+		if id == "" {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(`{"message": "comment not found"}`))
+			return
+		}
+		comment := Comment{}
+		result := db.First(&comment, id)
+		if result.Error != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(`{"message": "comment not found"}`))
+			return
+		}
+		result = db.Delete(&comment)
+		if result.Error != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(`{"message": "error comment delete"}`))
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"message": "comment deleted"}`))
 	default:
 		w.WriteHeader(http.StatusNotFound)
 		w.Write([]byte(`{"message": "not found"}`))
