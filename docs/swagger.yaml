@@ -1,5 +1,18 @@
 basePath: /
 definitions:
+  main.Comment:
+    properties:
+      body:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      postId:
+        type: integer
+    type: object
   main.Post:
     properties:
       body:
@@ -30,6 +43,128 @@ info:
   title: Echo Swagger API
   version: "1.0"
 paths:
+  /comments:
+    get:
+      description: Get comments based on given Post ID.
+      parameters:
+      - description: Post ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Header for xml output
+        in: header
+        name: Accept-xml
+        type: string
+      produces:
+      - application/json
+      - text/xml
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              items:
+                $ref: '#/definitions/main.Comment'
+              type: array
+            type: array
+      summary: Get comments based on given Post ID.
+      tags:
+      - Comments
+  /comments/:
+    delete:
+      description: Delete comment.
+      parameters:
+      - description: Comment ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/main.Response'
+      summary: Delete comment.
+      tags:
+      - Comments
+    post:
+      description: Save comment.
+      parameters:
+      - description: Post ID
+        in: formData
+        name: postId
+        required: true
+        type: number
+      - description: Comment name
+        in: formData
+        name: name
+        required: true
+        type: string
+      - description: Comment email
+        in: formData
+        name: email
+        required: true
+        type: string
+      - description: Comment body
+        in: formData
+        name: email
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.Response'
+      summary: Save comment.
+      tags:
+      - Comments
+    put:
+      description: Update comment.
+      parameters:
+      - description: Comment ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Comment name
+        in: formData
+        name: name
+        required: true
+        type: string
+      - description: Comment email
+        in: formData
+        name: email
+        required: true
+        type: string
+      - description: Comment body
+        in: formData
+        name: body
+        required: true
+        type: string
+      produces:
+      - application/json
+      - text/xml
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.Comment'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/main.Response'
+      summary: Update comment.
+      tags:
+      - Comments
   /posts:
     get:
       description: Get posts.

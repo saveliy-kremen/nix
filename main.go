@@ -165,7 +165,7 @@ func getPost(c echo.Context) error {
 // @Param title formData string true "Post title"
 // @Param body formData string true "Post body"
 // @Produce json
-// @Success 200 {object} Response Response{Message: 'post created'}
+// @Success 200 {object} Response
 // @Router /posts/ [post]
 func savePost(c echo.Context) error {
 	resp := c.Response()
@@ -194,8 +194,8 @@ func savePost(c echo.Context) error {
 // @Param title formData string true "Post title"
 // @Param body formData string true "Post body"
 // @Produce json
-// @Success 200 {object} Response Response{Message: 'post created'}
-// @Failure 400 {object} Response Response{Message: 'post not found'}
+// @Success 200 {object} Response
+// @Failure 400 {object} Response
 // @Router /posts/ [put]
 func updatePost(c echo.Context) error {
 	req := c.Request()
@@ -244,8 +244,8 @@ func updatePost(c echo.Context) error {
 // @Tags Posts
 // @Param id path integer true "Post ID"
 // @Produce json
-// @Success 200 {object} Response Response{Message: 'post created'}
-// @Failure 400 {object} Response Response{Message: 'post not found'}
+// @Success 200 {object} Response
+// @Failure 400 {object} Response
 // @Router /posts/ [delete]
 func deletePost(c echo.Context) error {
 	resp := c.Response()
@@ -272,6 +272,16 @@ func deletePost(c echo.Context) error {
 	return nil
 }
 
+// getComments godoc
+// @Summary Get comments based on given Post ID.
+// @Description Get comments based on given Post ID.
+// @Tags Comments
+// @Param id path integer true "Post ID"
+// @Param Accept-xml header string false "Header for xml output"
+// @Produce json
+// @Produce xml
+// @Success 200 {array} []Comment
+// @Router /comments [get]
 func getComments(c echo.Context) error {
 	req := c.Request()
 	headers := req.Header
@@ -297,6 +307,17 @@ func getComments(c echo.Context) error {
 	return nil
 }
 
+// saveComment godoc
+// @Summary Save comment.
+// @Description Save comment.
+// @Tags Comments
+// @Param postId formData number true "Post ID"
+// @Param name formData string true "Comment name"
+// @Param email formData string true "Comment email"
+// @Param email formData string true "Comment body"
+// @Produce json
+// @Success 200 {object} Response
+// @Router /comments/ [post]
 func saveComment(c echo.Context) error {
 	postID := c.Param("id")
 	resp := c.Response()
@@ -317,6 +338,19 @@ func saveComment(c echo.Context) error {
 	return nil
 }
 
+// updateComment godoc
+// @Summary Update comment.
+// @Description Update comment.
+// @Tags Comments
+// @Param id path integer true "Comment ID"
+// @Param name formData string true "Comment name"
+// @Param email formData string true "Comment email"
+// @Param body formData string true "Comment body"
+// @Produce json
+// @Produce xml
+// @Success 200 {object} Comment
+// @Failure 400 {object} Response
+// @Router /comments/ [put]
 func updateComment(c echo.Context) error {
 	req := c.Request()
 	headers := req.Header
@@ -358,6 +392,15 @@ func updateComment(c echo.Context) error {
 	return nil
 }
 
+// deleteComment godoc
+// @Summary Delete comment.
+// @Description Delete comment.
+// @Tags Comments
+// @Param id path integer true "Comment ID"
+// @Produce json
+// @Success 200 {object} Response
+// @Failure 400 {object} Response
+// @Router /comments/ [delete]
 func deleteComment(c echo.Context) error {
 	resp := c.Response()
 	var comment Comment
