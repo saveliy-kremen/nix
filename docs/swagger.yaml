@@ -11,6 +11,11 @@ definitions:
       userId:
         type: integer
     type: object
+  main.Response:
+    properties:
+      message:
+        type: string
+    type: object
 host: localhost:80
 info:
   contact:
@@ -27,18 +32,127 @@ info:
 paths:
   /posts:
     get:
-      consumes:
-      - '*/*'
-      description: get posts.
+      description: Get posts.
+      parameters:
+      - description: Header for xml output
+        in: header
+        name: Accept-xml
+        type: string
+      produces:
+      - application/json
+      - text/xml
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              items:
+                $ref: '#/definitions/main.Post'
+              type: array
+            type: array
+      summary: Get all posts.
+      tags:
+      - Posts
+  /posts/:
+    delete:
+      description: Delete post.
+      parameters:
+      - description: Post ID
+        in: path
+        name: id
+        required: true
+        type: integer
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            additionalProperties: true
-            type: object
-      summary: Get all posts.
+            $ref: '#/definitions/main.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/main.Response'
+      summary: Delete post.
+      tags:
+      - Posts
+    post:
+      description: Save post.
+      parameters:
+      - description: Post title
+        in: formData
+        name: title
+        required: true
+        type: string
+      - description: Post body
+        in: formData
+        name: body
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.Response'
+      summary: Save post.
+      tags:
+      - Posts
+    put:
+      description: Update post.
+      parameters:
+      - description: Post ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Post title
+        in: formData
+        name: title
+        required: true
+        type: string
+      - description: Post body
+        in: formData
+        name: body
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/main.Response'
+      summary: Update post.
+      tags:
+      - Posts
+  /posts/{id}:
+    get:
+      description: Get post based on given ID.
+      parameters:
+      - description: Post ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Header for xml output
+        in: header
+        name: Accept-xml
+        type: string
+      produces:
+      - application/json
+      - text/xml
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.Post'
+      summary: Get post by id.
       tags:
       - Posts
 schemes:

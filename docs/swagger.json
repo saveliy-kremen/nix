@@ -23,23 +23,186 @@
     "paths": {
         "/posts": {
             "get": {
-                "description": "get posts.",
-                "consumes": [
-                    "*/*"
+                "description": "Get posts.",
+                "produces": [
+                    "application/json",
+                    "text/xml"
                 ],
+                "tags": [
+                    "Posts"
+                ],
+                "summary": "Get all posts.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Header for xml output",
+                        "name": "Accept-xml",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/definitions/main.Post"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/posts/": {
+            "put": {
+                "description": "Update post.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "Posts"
                 ],
-                "summary": "Get all posts.",
+                "summary": "Update post.",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Post ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Post title",
+                        "name": "title",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Post body",
+                        "name": "body",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/main.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/main.Response"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Save post.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Posts"
+                ],
+                "summary": "Save post.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Post title",
+                        "name": "title",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Post body",
+                        "name": "body",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/main.Response"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete post.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Posts"
+                ],
+                "summary": "Delete post.",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Post ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/main.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/main.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/posts/{id}": {
+            "get": {
+                "description": "Get post based on given ID.",
+                "produces": [
+                    "application/json",
+                    "text/xml"
+                ],
+                "tags": [
+                    "Posts"
+                ],
+                "summary": "Get post by id.",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Post ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Header for xml output",
+                        "name": "Accept-xml",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/main.Post"
                         }
                     }
                 }
@@ -61,6 +224,14 @@
                 },
                 "userId": {
                     "type": "integer"
+                }
+            }
+        },
+        "main.Response": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
                 }
             }
         }

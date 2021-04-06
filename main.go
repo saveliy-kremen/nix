@@ -4,12 +4,13 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
-	"github.com/labstack/echo"
-	"gorm.io/driver/mysql"
-	"gorm.io/gorm"
 	"net/http"
 	"strconv"
+
+	"github.com/labstack/echo"
 	"github.com/swaggo/echo-swagger"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 
 	_ "./docs"
 )
@@ -27,6 +28,10 @@ type Comment struct {
 	Name   string `form:"name"`
 	Email  string `form:"email"`
 	Body   string `form:"body"`
+}
+
+type Response struct {
+	Message string
 }
 
 var db *gorm.DB
@@ -84,11 +89,12 @@ func main() {
 
 // getPosts godoc
 // @Summary Get all posts.
-// @Description get posts.
+// @Description Get posts.
 // @Tags Posts
-// @Accept */*
+// @Param Accept-xml header string false "Header for xml output"
 // @Produce json
-// @Success 200 {object} map[string]interface{}
+// @Produce xml
+// @Success 200 {array} []Post
 // @Router /posts [get]
 func getPosts(c echo.Context) error {
 	req := c.Request()
@@ -115,13 +121,14 @@ func getPosts(c echo.Context) error {
 
 // getPost godoc
 // @Summary Get post by id.
-// @Description get post.
+// @Description Get post based on given ID.
 // @Tags Posts
-// @ID get-string-by-int
-// @Accept  json
-// @Produce  json
-// @Param id path int true "Account ID"
+// @Param id path integer true "Post ID"
+// @Param Accept-xml header string false "Header for xml output"
+// @Produce json
+// @Produce xml
 // @Success 200 {object} Post
+// @Router /posts/{id} [get]
 func getPost(c echo.Context) error {
 	req := c.Request()
 	headers := req.Header
@@ -151,6 +158,15 @@ func getPost(c echo.Context) error {
 	return nil
 }
 
+// savePost godoc
+// @Summary Save post.
+// @Description Save post.
+// @Tags Posts
+// @Param title formData string true "Post title"
+// @Param body formData string true "Post body"
+// @Produce json
+// @Success 200 {object} Response Response{Message: 'post created'}
+// @Router /posts/ [post]
 func savePost(c echo.Context) error {
 	resp := c.Response()
 	var post Post
@@ -170,6 +186,17 @@ func savePost(c echo.Context) error {
 	return nil
 }
 
+// updatePost godoc
+// @Summary Update post.
+// @Description Update post.
+// @Tags Posts
+// @Param id path integer true "Post ID"
+// @Param title formData string true "Post title"
+// @Param body formData string true "Post body"
+// @Produce json
+// @Success 200 {object} Response Response{Message: 'post created'}
+// @Failure 400 {object} Response Response{Message: 'post not found'}
+// @Router /posts/ [put]
 func updatePost(c echo.Context) error {
 	req := c.Request()
 	headers := req.Header
@@ -211,6 +238,15 @@ func updatePost(c echo.Context) error {
 	return nil
 }
 
+// deletePost godoc
+// @Summary Delete post.
+// @Description Delete post.
+// @Tags Posts
+// @Param id path integer true "Post ID"
+// @Produce json
+// @Success 200 {object} Response Response{Message: 'post created'}
+// @Failure 400 {object} Response Response{Message: 'post not found'}
+// @Router /posts/ [delete]
 func deletePost(c echo.Context) error {
 	resp := c.Response()
 	var post Post
