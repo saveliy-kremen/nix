@@ -9,6 +9,9 @@ import (
 	"gorm.io/gorm"
 	"net/http"
 	"strconv"
+	"github.com/swaggo/echo-swagger"
+
+	_ "./docs"
 )
 
 type Post struct {
@@ -28,6 +31,21 @@ type Comment struct {
 
 var db *gorm.DB
 
+// @title Echo Swagger API
+// @version 1.0
+// @description This is a echo post + comments server.
+// @termsOfService http://swagger.io/terms/
+
+// @contact.name API Support
+// @contact.url http://www.swagger.io/support
+// @contact.email support@swagger.io
+
+// @license.name Apache 2.0
+// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host localhost:80
+// @BasePath /
+// @schemes http
 func main() {
 	var err error
 	dsn := "Stas_nixuser:edUfw5nxpT@tcp(192.168.1.1:3306)/Stas_nix?charset=utf8mb4&parseTime=True&loc=Local"
@@ -58,9 +76,20 @@ func main() {
 	e.PUT("/comments/:id", updateComment)
 	e.DELETE("/comments/:id", deleteComment)
 
+	e.GET("/swagger/*", echoSwagger.WrapHandler)
+
 	e.Logger.Fatal(e.Start(":80"))
+	//https://golangexample.com/automatically-generate-restful-api-documentation-with-swagger-2-0-for-go/
 }
 
+// getPosts godoc
+// @Summary Get all posts.
+// @Description get posts.
+// @Tags Posts
+// @Accept */*
+// @Produce json
+// @Success 200 {object} map[string]interface{}
+// @Router /posts [get]
 func getPosts(c echo.Context) error {
 	req := c.Request()
 	headers := req.Header
@@ -84,6 +113,15 @@ func getPosts(c echo.Context) error {
 	return nil
 }
 
+// getPost godoc
+// @Summary Get post by id.
+// @Description get post.
+// @Tags Posts
+// @ID get-string-by-int
+// @Accept  json
+// @Produce  json
+// @Param id path int true "Account ID"
+// @Success 200 {object} Post
 func getPost(c echo.Context) error {
 	req := c.Request()
 	headers := req.Header
