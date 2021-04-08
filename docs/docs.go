@@ -32,7 +32,7 @@ var doc = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/comments": {
+        "/comments/{id}": {
             "get": {
                 "description": "Get comments based on given Post ID.",
                 "produces": [
@@ -72,9 +72,7 @@ var doc = `{
                         }
                     }
                 }
-            }
-        },
-        "/comments/": {
+            },
             "put": {
                 "description": "Update comment.",
                 "produces": [
@@ -143,8 +141,8 @@ var doc = `{
                     {
                         "type": "number",
                         "description": "Post ID",
-                        "name": "postId",
-                        "in": "formData",
+                        "name": "id",
+                        "in": "path",
                         "required": true
                     },
                     {
@@ -164,7 +162,7 @@ var doc = `{
                     {
                         "type": "string",
                         "description": "Comment body",
-                        "name": "email",
+                        "name": "body",
                         "in": "formData",
                         "required": true
                     }
@@ -248,6 +246,76 @@ var doc = `{
             }
         },
         "/posts/": {
+            "post": {
+                "description": "Save post.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Posts"
+                ],
+                "summary": "Save post.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Post title",
+                        "name": "title",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Post body",
+                        "name": "body",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/main.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/posts/{id}": {
+            "get": {
+                "description": "Get post based on given ID.",
+                "produces": [
+                    "application/json",
+                    "text/xml"
+                ],
+                "tags": [
+                    "Posts"
+                ],
+                "summary": "Get post by id.",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Post ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Header for xml output",
+                        "name": "Accept-xml",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/main.Post"
+                        }
+                    }
+                }
+            },
             "put": {
                 "description": "Update post.",
                 "produces": [
@@ -295,40 +363,6 @@ var doc = `{
                     }
                 }
             },
-            "post": {
-                "description": "Save post.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Posts"
-                ],
-                "summary": "Save post.",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Post title",
-                        "name": "title",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Post body",
-                        "name": "body",
-                        "in": "formData",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/main.Response"
-                        }
-                    }
-                }
-            },
             "delete": {
                 "description": "Delete post.",
                 "produces": [
@@ -358,42 +392,6 @@ var doc = `{
                         "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/main.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/posts/{id}": {
-            "get": {
-                "description": "Get post based on given ID.",
-                "produces": [
-                    "application/json",
-                    "text/xml"
-                ],
-                "tags": [
-                    "Posts"
-                ],
-                "summary": "Get post by id.",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Post ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Header for xml output",
-                        "name": "Accept-xml",
-                        "in": "header"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/main.Post"
                         }
                     }
                 }

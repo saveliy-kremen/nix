@@ -196,7 +196,7 @@ func savePost(c echo.Context) error {
 // @Produce json
 // @Success 200 {object} Response
 // @Failure 400 {object} Response
-// @Router /posts/ [put]
+// @Router /posts/{id} [put]
 func updatePost(c echo.Context) error {
 	req := c.Request()
 	headers := req.Header
@@ -246,7 +246,7 @@ func updatePost(c echo.Context) error {
 // @Produce json
 // @Success 200 {object} Response
 // @Failure 400 {object} Response
-// @Router /posts/ [delete]
+// @Router /posts/{id} [delete]
 func deletePost(c echo.Context) error {
 	resp := c.Response()
 	var post Post
@@ -281,7 +281,7 @@ func deletePost(c echo.Context) error {
 // @Produce json
 // @Produce xml
 // @Success 200 {array} []Comment
-// @Router /comments [get]
+// @Router /comments/{id} [get]
 func getComments(c echo.Context) error {
 	req := c.Request()
 	headers := req.Header
@@ -311,13 +311,13 @@ func getComments(c echo.Context) error {
 // @Summary Save comment.
 // @Description Save comment.
 // @Tags Comments
-// @Param postId formData number true "Post ID"
+// @Param id path number true "Post ID"
 // @Param name formData string true "Comment name"
 // @Param email formData string true "Comment email"
-// @Param email formData string true "Comment body"
+// @Param body formData string true "Comment body"
 // @Produce json
 // @Success 200 {object} Response
-// @Router /comments/ [post]
+// @Router /comments/{id} [post]
 func saveComment(c echo.Context) error {
 	postID := c.Param("id")
 	resp := c.Response()
@@ -350,7 +350,7 @@ func saveComment(c echo.Context) error {
 // @Produce xml
 // @Success 200 {object} Comment
 // @Failure 400 {object} Response
-// @Router /comments/ [put]
+// @Router /comments/{id} [put]
 func updateComment(c echo.Context) error {
 	req := c.Request()
 	headers := req.Header
@@ -400,7 +400,7 @@ func updateComment(c echo.Context) error {
 // @Produce json
 // @Success 200 {object} Response
 // @Failure 400 {object} Response
-// @Router /comments/ [delete]
+// @Router /comments/{id} [delete]
 func deleteComment(c echo.Context) error {
 	resp := c.Response()
 	var comment Comment
