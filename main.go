@@ -4,11 +4,15 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
-	"github.com/labstack/echo"
-	"gorm.io/driver/mysql"
-	"gorm.io/gorm"
 	"net/http"
 	"strconv"
+
+	"github.com/labstack/echo"
+	"github.com/swaggo/echo-swagger"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
+
+	_ "./docs"
 )
 
 type Post struct {
@@ -26,8 +30,27 @@ type Comment struct {
 	Body   string `form:"body"`
 }
 
+type Response struct {
+	Message string
+}
+
 var db *gorm.DB
 
+// @title Echo Swagger API
+// @version 1.0
+// @description This is a echo post + comments server.
+// @termsOfService http://swagger.io/terms/
+
+// @contact.name API Support
+// @contact.url http://www.swagger.io/support
+// @contact.email support@swagger.io
+
+// @license.name Apache 2.0
+// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host localhost:80
+// @BasePath /
+// @schemes http
 func main() {
 	var err error
 	dsn := "Stas_nixuser:edUfw5nxpT@tcp(192.168.1.1:3306)/Stas_nix?charset=utf8mb4&parseTime=True&loc=Local"
@@ -58,9 +81,21 @@ func main() {
 	e.PUT("/comments/:id", updateComment)
 	e.DELETE("/comments/:id", deleteComment)
 
+	e.GET("/swagger/*", echoSwagger.WrapHandler)
+
 	e.Logger.Fatal(e.Start(":80"))
+	//https://golangexample.com/automatically-generate-restful-api-documentation-with-swagger-2-0-for-go/
 }
 
+// getPosts godoc
+// @Summary Get all posts.
+// @Description Get posts.
+// @Tags Posts
+// @Param Accept-xml header string false "Header for xml output"
+// @Produce json
+// @Produce xml
+// @Success 200 {array} []Post
+// @Router /posts [get]
 func getPosts(c echo.Context) error {
 	req := c.Request()
 	headers := req.Header
@@ -84,6 +119,16 @@ func getPosts(c echo.Context) error {
 	return nil
 }
 
+// getPost godoc
+// @Summary Get post by id.
+// @Description Get post based on given ID.
+// @Tags Posts
+// @Param id path integer true "Post ID"
+// @Param Accept-xml header string false "Header for xml output"
+// @Produce json
+// @Produce xml
+// @Success 200 {object} Post
+// @Router /posts/{id} [get]
 func getPost(c echo.Context) error {
 	req := c.Request()
 	headers := req.Header
@@ -113,6 +158,15 @@ func getPost(c echo.Context) error {
 	return nil
 }
 
+// savePost godoc
+// @Summary Save post.
+// @Description Save post.
+// @Tags Posts
+// @Param title formData string true "Post title"
+// @Param body formData string true "Post body"
+// @Produce json
+// @Success 200 {object} Response
+// @Router /posts/ [post]
 func savePost(c echo.Context) error {
 	resp := c.Response()
 	var post Post
@@ -132,6 +186,17 @@ func savePost(c echo.Context) error {
 	return nil
 }
 
+// updatePost godoc
+// @Summary Update post.
+// @Description Update post.
+// @Tags Posts
+// @Param id path integer true "Post ID"
+// @Param title formData string true "Post title"
+// @Param body formData string true "Post body"
+// @Produce json
+// @Success 200 {object} Response
+// @Failure 400 {object} Response
+// @Router /posts/{id} [put]
 func updatePost(c echo.Context) error {
 	req := c.Request()
 	headers := req.Header
@@ -173,6 +238,15 @@ func updatePost(c echo.Context) error {
 	return nil
 }
 
+// deletePost godoc
+// @Summary Delete post.
+// @Description Delete post.
+// @Tags Posts
+// @Param id path integer true "Post ID"
+// @Produce json
+// @Success 200 {object} Response
+// @Failure 400 {object} Response
+// @Router /posts/{id} [delete]
 func deletePost(c echo.Context) error {
 	resp := c.Response()
 	var post Post
@@ -198,6 +272,16 @@ func deletePost(c echo.Context) error {
 	return nil
 }
 
+// getComments godoc
+// @Summary Get comments based on given Post ID.
+// @Description Get comments based on given Post ID.
+// @Tags Comments
+// @Param id path integer true "Post ID"
+// @Param Accept-xml header string false "Header for xml output"
+// @Produce json
+// @Produce xml
+// @Success 200 {array} []Comment
+// @Router /comments/{id} [get]
 func getComments(c echo.Context) error {
 	req := c.Request()
 	headers := req.Header
@@ -223,6 +307,17 @@ func getComments(c echo.Context) error {
 	return nil
 }
 
+// saveComment godoc
+// @Summary Save comment.
+// @Description Save comment.
+// @Tags Comments
+// @Param id path number true "Post ID"
+// @Param name formData string true "Comment name"
+// @Param email formData string true "Comment email"
+// @Param body formData string true "Comment body"
+// @Produce json
+// @Success 200 {object} Response
+// @Router /comments/{id} [post]
 func saveComment(c echo.Context) error {
 	postID := c.Param("id")
 	resp := c.Response()
@@ -243,6 +338,19 @@ func saveComment(c echo.Context) error {
 	return nil
 }
 
+// updateComment godoc
+// @Summary Update comment.
+// @Description Update comment.
+// @Tags Comments
+// @Param id path integer true "Comment ID"
+// @Param name formData string true "Comment name"
+// @Param email formData string true "Comment email"
+// @Param body formData string true "Comment body"
+// @Produce json
+// @Produce xml
+// @Success 200 {object} Comment
+// @Failure 400 {object} Response
+// @Router /comments/{id} [put]
 func updateComment(c echo.Context) error {
 	req := c.Request()
 	headers := req.Header
@@ -284,6 +392,15 @@ func updateComment(c echo.Context) error {
 	return nil
 }
 
+// deleteComment godoc
+// @Summary Delete comment.
+// @Description Delete comment.
+// @Tags Comments
+// @Param id path integer true "Comment ID"
+// @Produce json
+// @Success 200 {object} Response
+// @Failure 400 {object} Response
+// @Router /comments/{id} [delete]
 func deleteComment(c echo.Context) error {
 	resp := c.Response()
 	var comment Comment
