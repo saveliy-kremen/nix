@@ -13,6 +13,13 @@ definitions:
       postId:
         type: integer
     type: object
+  main.ErrorResponse:
+    properties:
+      message:
+        type: string
+      status:
+        type: integer
+    type: object
   main.Post:
     properties:
       body:
@@ -26,6 +33,8 @@ definitions:
     type: object
   main.Response:
     properties:
+      id:
+        type: integer
       message:
         type: string
     type: object
@@ -230,7 +239,7 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/main.Response'
+            $ref: '#/definitions/main.ErrorResponse'
       summary: Delete post.
       tags:
       - Posts
@@ -281,11 +290,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/main.Response'
+            $ref: '#/definitions/main.Post'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/main.Response'
+            $ref: '#/definitions/main.ErrorResponse'
       summary: Update post.
       tags:
       - Posts

@@ -31,6 +31,12 @@ type Comment struct {
 }
 
 type Response struct {
+	ID int
+	Message string
+}
+
+type ErrorResponse struct {
+	Status int
 	Message string
 }
 
@@ -95,6 +101,7 @@ func main() {
 // @Produce json
 // @Produce xml
 // @Success 200 {array} []Post
+// @Failure 500 {object} ErrorResponse
 // @Router /posts [get]
 func getPosts(c echo.Context) error {
 	req := c.Request()
@@ -128,6 +135,7 @@ func getPosts(c echo.Context) error {
 // @Produce json
 // @Produce xml
 // @Success 200 {object} Post
+// @Failure 500 {object} ErrorResponse
 // @Router /posts/{id} [get]
 func getPost(c echo.Context) error {
 	req := c.Request()
@@ -166,6 +174,7 @@ func getPost(c echo.Context) error {
 // @Param body formData string true "Post body"
 // @Produce json
 // @Success 200 {object} Response
+// @Failure 400 {object} ErrorResponse
 // @Router /posts/ [post]
 func savePost(c echo.Context) error {
 	resp := c.Response()
@@ -178,7 +187,8 @@ func savePost(c echo.Context) error {
 	if result.Error == nil {
 		resp.WriteHeader(http.StatusCreated)
 		resp.Header().Set("Content-Type", "application/json")
-		resp.Write([]byte(`{"message": "post created"}`))
+		b, _ := json.Marshal(Response{ID: post.Id, Message: "post created"})
+		resp.Write(b)
 	} else {
 		echo.NewHTTPError(http.StatusBadRequest, result.Error.Error())
 		return nil
@@ -194,8 +204,8 @@ func savePost(c echo.Context) error {
 // @Param title formData string true "Post title"
 // @Param body formData string true "Post body"
 // @Produce json
-// @Success 200 {object} Response
-// @Failure 400 {object} Response
+// @Success 200 {object} Post
+// @Failure 400 {object} ErrorResponse
 // @Router /posts/{id} [put]
 func updatePost(c echo.Context) error {
 	req := c.Request()
@@ -245,7 +255,7 @@ func updatePost(c echo.Context) error {
 // @Param id path integer true "Post ID"
 // @Produce json
 // @Success 200 {object} Response
-// @Failure 400 {object} Response
+// @Failure 400 {object} ErrorResponse
 // @Router /posts/{id} [delete]
 func deletePost(c echo.Context) error {
 	resp := c.Response()
@@ -267,7 +277,8 @@ func deletePost(c echo.Context) error {
 		}
 		resp.WriteHeader(http.StatusOK)
 		resp.Header().Set("Content-Type", "application/json")
-		resp.Write([]byte(`{"message": "post deleted"}`))
+		b, _ := json.Marshal(Response{ID: post.Id, Message: "post deleted"})
+		resp.Write(b)
 	}
 	return nil
 }
@@ -281,6 +292,7 @@ func deletePost(c echo.Context) error {
 // @Produce json
 // @Produce xml
 // @Success 200 {array} []Comment
+// @Failure 500 {object} ErrorResponse
 // @Router /comments/{id} [get]
 func getComments(c echo.Context) error {
 	req := c.Request()
@@ -317,6 +329,7 @@ func getComments(c echo.Context) error {
 // @Param body formData string true "Comment body"
 // @Produce json
 // @Success 200 {object} Response
+// @Failure 400 {object} ErrorResponse
 // @Router /comments/{id} [post]
 func saveComment(c echo.Context) error {
 	postID := c.Param("id")
@@ -330,7 +343,8 @@ func saveComment(c echo.Context) error {
 	if result.Error == nil {
 		resp.WriteHeader(http.StatusCreated)
 		resp.Header().Set("Content-Type", "application/json")
-		resp.Write([]byte(`{"message": "post created"}`))
+		b, _ := json.Marshal(Response{ID: comment.Id, Message: "comment created"})
+		resp.Write(b)
 	} else {
 		echo.NewHTTPError(http.StatusBadRequest, result.Error.Error())
 		return nil
@@ -349,7 +363,7 @@ func saveComment(c echo.Context) error {
 // @Produce json
 // @Produce xml
 // @Success 200 {object} Comment
-// @Failure 400 {object} Response
+// @Failure 400 {object} ErrorResponse
 // @Router /comments/{id} [put]
 func updateComment(c echo.Context) error {
 	req := c.Request()
@@ -399,7 +413,7 @@ func updateComment(c echo.Context) error {
 // @Param id path integer true "Comment ID"
 // @Produce json
 // @Success 200 {object} Response
-// @Failure 400 {object} Response
+// @Failure 400 {object} ErrorResponse
 // @Router /comments/{id} [delete]
 func deleteComment(c echo.Context) error {
 	resp := c.Response()
@@ -421,7 +435,8 @@ func deleteComment(c echo.Context) error {
 		}
 		resp.WriteHeader(http.StatusOK)
 		resp.Header().Set("Content-Type", "application/json")
-		resp.Write([]byte(`{"message": "comment deleted"}`))
+		b, _ := json.Marshal(Response{ID: comment.Id, Message: "comment deleted"})
+		resp.Write(b)
 	}
 	return nil
 }
