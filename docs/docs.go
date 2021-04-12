@@ -352,13 +352,13 @@ var doc = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/main.Response"
+                            "$ref": "#/definitions/main.Post"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/main.Response"
+                            "$ref": "#/definitions/main.ErrorResponse"
                         }
                     }
                 }
@@ -391,7 +391,7 @@ var doc = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/main.Response"
+                            "$ref": "#/definitions/main.ErrorResponse"
                         }
                     }
                 }
@@ -419,6 +419,17 @@ var doc = `{
                 }
             }
         },
+        "main.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "integer"
+                }
+            }
+        },
         "main.Post": {
             "type": "object",
             "properties": {
@@ -439,6 +450,9 @@ var doc = `{
         "main.Response": {
             "type": "object",
             "properties": {
+                "id": {
+                    "type": "integer"
+                },
                 "message": {
                     "type": "string"
                 }
