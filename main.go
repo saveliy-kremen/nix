@@ -7,8 +7,12 @@ import (
 	"net/http"
 	"strconv"
 
+	fb "./fb"
+	google "./google"
+	tw "./tw"
+
 	"github.com/labstack/echo"
-	"github.com/swaggo/echo-swagger"
+	echoSwagger "github.com/swaggo/echo-swagger"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 
@@ -31,12 +35,12 @@ type Comment struct {
 }
 
 type Response struct {
-	ID int
+	ID      int
 	Message string
 }
 
 type ErrorResponse struct {
-	Status int
+	Status  int
 	Message string
 }
 
@@ -77,6 +81,16 @@ func main() {
 	// }
 
 	e := echo.New()
+
+	// Auth
+	e.GET("/", handleAuth)
+	e.GET("/fb_login", fb.HandleFacebookLogin)
+	e.GET("/fb_oauth2callback", fb.HandleFacebookCallback)
+	e.GET("/google_login", google.HandleGoogleLogin)
+	e.GET("/google_oauth2callback", google.HandleGoogleCallback)
+	e.GET("/tw_login", tw.HandleTwitterLogin)
+	e.GET("/tw_oauth2callback", tw.HandleTwitterCallback)
+
 	e.GET("/posts/", getPosts)
 	e.GET("/posts/:id", getPost)
 	e.POST("/posts/", savePost)
@@ -89,8 +103,21 @@ func main() {
 
 	e.GET("/swagger/*", echoSwagger.WrapHandler)
 
-	e.Logger.Fatal(e.Start(":80"))
+	//e.Pre(middleware.HTTPSRedirect())
+	e.Logger.Fatal(e.StartTLS(":3000", "cert/localhost.crt", "cert/localhost.key"))
 	//https://golangexample.com/automatically-generate-restful-api-documentation-with-swagger-2-0-for-go/
+}
+
+func handleAuth(c echo.Context) error {
+	var htmlIndex = `
+	<html>
+	  <body>
+		 <a href="/fb_login">Facebook Log In</a><br>
+		 <a href="/google_login">Google Log In</a><br>
+		 <a href="/tw_login">Twitter Log In</a>
+	  </body>
+	</html>`
+	return c.HTML(http.StatusOK, htmlIndex)
 }
 
 // getPosts godoc
