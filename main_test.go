@@ -11,11 +11,14 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
+var token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNCIsInVzZXJfcm9sZSI6IjEiLCJleHAiOjE2MTk3MTY3MDV9._9HYljbrrN6LUikG6DycmYcsMpCrDlCg3e4XHqkc7qw"
+var userID = 4
+
 var postID int
 var commentID int
 
 func Test_getPosts(t *testing.T) {
-	resp, err := http.Get("http://localhost/posts/")
+	resp, err := http.Get("http://localhost:3000/posts/")
 	if err != nil {
 		t.Errorf("Handler returned %v", err.Error())
 	}
@@ -38,7 +41,11 @@ func Test_postPost(t *testing.T) {
 		"body":  {"testBody"},
 	}
 
-	resp, err := http.PostForm("http://localhost/posts/", formData)
+	client := &http.Client{}
+	req, _ := http.NewRequest(http.MethodPost, "http://localhost:3000/posts/", strings.NewReader(formData.Encode()))
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Add("Authorization", "Bearer "+token)
+	resp, err := client.Do(req)
 	if err != nil {
 		t.Errorf("Handler returned %v", err.Error())
 	}
@@ -62,8 +69,9 @@ func Test_putPost(t *testing.T) {
 	}
 
 	client := &http.Client{}
-	req, err := http.NewRequest(http.MethodPut, "http://localhost/posts/"+strconv.Itoa(postID), strings.NewReader(formData.Encode()))
+	req, _ := http.NewRequest(http.MethodPut, "http://localhost:3000/posts/"+strconv.Itoa(postID), strings.NewReader(formData.Encode()))
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Add("Authorization", "Bearer "+token)
 	resp, err := client.Do(req)
 	if err != nil {
 		t.Errorf("Handler returned %v", err.Error())
@@ -79,7 +87,7 @@ func Test_putPost(t *testing.T) {
 	json.NewDecoder(resp.Body).Decode(&post)
 	expectedPost := Post{
 		Id:     postID,
-		UserID: 7,
+		UserID: userID,
 		Title:  "testUpdateTitle",
 		Body:   "testUpdateBody",
 	}
@@ -90,7 +98,7 @@ func Test_putPost(t *testing.T) {
 }
 
 func Test_getPost(t *testing.T) {
-	resp, err := http.Get("http://localhost/posts/" + strconv.Itoa(postID))
+	resp, err := http.Get("http://localhost:3000/posts/" + strconv.Itoa(postID))
 	if err != nil {
 		t.Errorf("Handler returned %v", err.Error())
 	}
@@ -103,7 +111,7 @@ func Test_getPost(t *testing.T) {
 	json.NewDecoder(resp.Body).Decode(&post)
 	expectedPost := Post{
 		Id:     postID,
-		UserID: 7,
+		UserID: userID,
 		Title:  "testUpdateTitle",
 		Body:   "testUpdateBody",
 	}
@@ -115,12 +123,16 @@ func Test_getPost(t *testing.T) {
 func Test_postComment(t *testing.T) {
 
 	formData := url.Values{
-		"name":   {"nameTitle"},
-		"email":   {"testEmail"},
-		"body":    {"testBody"},
+		"name":  {"nameTitle"},
+		"email": {"testEmail"},
+		"body":  {"testBody"},
 	}
 
-	resp, err := http.PostForm("http://localhost/comments/"+strconv.Itoa(postID), formData)
+	client := &http.Client{}
+	req, _ := http.NewRequest(http.MethodPost, "http://localhost:3000/comments/"+strconv.Itoa(postID), strings.NewReader(formData.Encode()))
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Add("Authorization", "Bearer "+token)
+	resp, err := client.Do(req)
 	if err != nil {
 		t.Errorf("Handler returned %v", err.Error())
 	}
@@ -139,14 +151,15 @@ func Test_postComment(t *testing.T) {
 
 func Test_putComment(t *testing.T) {
 	formData := url.Values{
-		"name": {"testUpdateName"},
+		"name":  {"testUpdateName"},
 		"email": {"testUpdateEmail"},
 		"body":  {"testUpdateBody"},
 	}
 
 	client := &http.Client{}
-	req, err := http.NewRequest(http.MethodPut, "http://localhost/comments/"+strconv.Itoa(commentID), strings.NewReader(formData.Encode()))
+	req, _ := http.NewRequest(http.MethodPut, "http://localhost:3000/comments/"+strconv.Itoa(commentID), strings.NewReader(formData.Encode()))
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Add("Authorization", "Bearer "+token)
 	resp, err := client.Do(req)
 	if err != nil {
 		t.Errorf("Handler returned %v", err.Error())
@@ -162,8 +175,9 @@ func Test_putComment(t *testing.T) {
 	json.NewDecoder(resp.Body).Decode(&comment)
 	expectedComment := Comment{
 		Id:     commentID,
+		UserID: userID,
 		PostID: postID,
-		Name:  "testUpdateName",
+		Name:   "testUpdateName",
 		Email:  "testUpdateEmail",
 		Body:   "testUpdateBody",
 	}
@@ -174,7 +188,7 @@ func Test_putComment(t *testing.T) {
 }
 
 func Test_getComments(t *testing.T) {
-	resp, err := http.Get("http://localhost/comments/" + strconv.Itoa(postID))
+	resp, err := http.Get("http://localhost:3000/comments/" + strconv.Itoa(postID))
 	if err != nil {
 		t.Errorf("Handler returned %v", err.Error())
 	}
@@ -193,7 +207,8 @@ func Test_getComments(t *testing.T) {
 func Test_deleteComment(t *testing.T) {
 	client := &http.Client{}
 
-	req, err := http.NewRequest("DELETE", "http://localhost/comments/"+strconv.Itoa(commentID), nil)
+	req, err := http.NewRequest("DELETE", "http://localhost:3000/comments/"+strconv.Itoa(commentID), nil)
+	req.Header.Add("Authorization", "Bearer "+token)
 	if err != nil {
 		t.Errorf("Handler returned %v", err.Error())
 		return
@@ -214,7 +229,8 @@ func Test_deleteComment(t *testing.T) {
 func Test_deletePost(t *testing.T) {
 	client := &http.Client{}
 
-	req, err := http.NewRequest("DELETE", "http://localhost/comments/"+strconv.Itoa(postID), nil)
+	req, err := http.NewRequest("DELETE", "http://localhost:3000/posts/"+strconv.Itoa(postID), nil)
+	req.Header.Add("Authorization", "Bearer "+token)
 	if err != nil {
 		t.Errorf("Handler returned %v", err.Error())
 		return
