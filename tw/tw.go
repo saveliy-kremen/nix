@@ -2,13 +2,15 @@ package fb
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
-	"strconv"
 
 	auth "../auth"
+	db "../db"
+	"gorm.io/gorm"
 
 	"github.com/dghubble/oauth1"
 	"github.com/dghubble/oauth1/twitter"
@@ -70,12 +72,20 @@ func HandleTwitterCallback(c echo.Context) error {
 		return c.String(http.StatusBadRequest, resp)
 	}
 	var result struct {
-		Id   string
+		Id   string `json:"id_str"`
 		Name string
 	}
 	json.Unmarshal(response, &result)
-	userId, _ := strconv.Atoi(result.Id)
-	userToken := auth.CreateToken(uint32(userId), 1)
+
+	user := db.User{}
+	userResult := db.DB.Where("tw_id = ?", result.Id).First(&user)
+	if errors.Is(userResult.Error, gorm.ErrRecordNotFound) {
+		user.Name = result.Name
+		user.TwID = result.Id
+		db.DB.Create(&user)
+	}
+
+	userToken := auth.CreateToken(user.Id, 1)
 	res := fmt.Sprintf("Name: %s\nToken: %s", result.Name, userToken)
 	return c.String(http.StatusOK, res)
 }

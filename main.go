@@ -3,18 +3,19 @@ package main
 import (
 	"encoding/json"
 	"encoding/xml"
-	"fmt"
 	"net/http"
 	"strconv"
 
+	auth "./auth"
+	db "./db"
 	fb "./fb"
 	google "./google"
 	tw "./tw"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
+	"github.com/labstack/echo/middleware"
 	echoSwagger "github.com/swaggo/echo-swagger"
-	"gorm.io/driver/mysql"
-	"gorm.io/gorm"
 
 	_ "./docs"
 )
@@ -27,11 +28,20 @@ type Post struct {
 }
 
 type Comment struct {
+	UserID int `json:"userId"`
 	PostID int `json:"postId" form:"postId"`
 	Id     int
 	Name   string `form:"name"`
 	Email  string `form:"email"`
 	Body   string `form:"body"`
+}
+
+type User struct {
+	Id       int
+	Name     string
+	FbID     string
+	GoogleID string
+	TwID     string
 }
 
 type Response struct {
@@ -40,11 +50,8 @@ type Response struct {
 }
 
 type ErrorResponse struct {
-	Status  int
 	Message string
 }
-
-var db *gorm.DB
 
 // @title Echo Swagger API
 // @version 1.0
@@ -58,28 +65,15 @@ var db *gorm.DB
 // @license.name Apache 2.0
 // @license.url http://www.apache.org/licenses/LICENSE-2.0.html
 
-// @host localhost:80
+// @Security ApiKeyAuth
+// @securityDefinitions.apikey ApiKeyAuth
+// @in header
+// @name Authorization
+
+// @host localhost:3000
 // @BasePath /
-// @schemes http
+// @schemes https
 func main() {
-	var err error
-	dsn := "Stas_nixuser:edUfw5nxpT@tcp(192.168.1.1:3306)/Stas_nix?charset=utf8mb4&parseTime=True&loc=Local"
-	db, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
-	if err != nil {
-		fmt.Println(err)
-		panic("gorm error")
-	}
-
-	// _, err = db.Exec("CREATE TABLE posts ( user_id integer, id integer, title text, body text, PRIMARY KEY (id))")
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	// _, err = db.Exec("CREATE TABLE comments ( post_id integer, id integer, name text, email varchar(256), body text, PRIMARY KEY (id))")
-	// if err != nil {
-	// 	panic(err)
-	// }
-
 	e := echo.New()
 
 	// Auth
@@ -93,17 +87,23 @@ func main() {
 
 	e.GET("/posts/", getPosts)
 	e.GET("/posts/:id", getPost)
-	e.POST("/posts/", savePost)
-	e.PUT("/posts/:id", updatePost)
-	e.DELETE("/posts/:id", deletePost)
+
+	posts := e.Group("/posts")
+	posts.Use(middleware.JWT([]byte(auth.JWTKey)))
+	posts.POST("/", savePost)
+	posts.PUT("/:id", updatePost)
+	posts.DELETE("/:id", deletePost)
+
 	e.GET("/comments/:id", getComments)
-	e.POST("/comments/:id", saveComment)
-	e.PUT("/comments/:id", updateComment)
-	e.DELETE("/comments/:id", deleteComment)
+
+	comments := e.Group("/comments")
+	comments.Use(middleware.JWT([]byte(auth.JWTKey)))
+	comments.POST("/:id", saveComment)
+	comments.PUT("/:id", updateComment)
+	comments.DELETE("/:id", deleteComment)
 
 	e.GET("/swagger/*", echoSwagger.WrapHandler)
 
-	//e.Pre(middleware.HTTPSRedirect())
 	e.Logger.Fatal(e.StartTLS(":3000", "cert/localhost.crt", "cert/localhost.key"))
 	//https://golangexample.com/automatically-generate-restful-api-documentation-with-swagger-2-0-for-go/
 }
@@ -128,15 +128,15 @@ func handleAuth(c echo.Context) error {
 // @Produce json
 // @Produce xml
 // @Success 200 {array} []Post
-// @Failure 500 {object} ErrorResponse
-// @Router /posts [get]
+// @Failure 400 {object} ErrorResponse
+// @Router /posts/ [get]
 func getPosts(c echo.Context) error {
 	req := c.Request()
 	headers := req.Header
 	acceptXML := headers.Get("Accept-xml")
 	resp := c.Response()
 	var posts []Post
-	db.Order("id desc").Find(&posts)
+	db.DB.Order("id desc").Find(&posts)
 	if acceptXML == "" {
 		resp.WriteHeader(http.StatusOK)
 		resp.Header().Set("Content-Type", "application/json")
@@ -144,8 +144,7 @@ func getPosts(c echo.Context) error {
 	} else {
 		xmlOut, err := xml.MarshalIndent(posts, "", "  ")
 		if err != nil {
-			echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-			return nil
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
 		resp.Header().Set("Content-Type", "application/xml")
 		c.String(http.StatusOK, string(xmlOut))
@@ -162,7 +161,7 @@ func getPosts(c echo.Context) error {
 // @Produce json
 // @Produce xml
 // @Success 200 {object} Post
-// @Failure 500 {object} ErrorResponse
+// @Failure 400 {object} ErrorResponse
 // @Router /posts/{id} [get]
 func getPost(c echo.Context) error {
 	req := c.Request()
@@ -171,10 +170,9 @@ func getPost(c echo.Context) error {
 	id := c.Param("id")
 	resp := c.Response()
 	post := Post{}
-	result := db.First(&post, id)
+	result := db.DB.First(&post, id)
 	if result.Error != nil {
-		echo.NewHTTPError(http.StatusBadRequest, result.Error.Error())
-		return nil
+		return echo.NewHTTPError(http.StatusBadRequest, result.Error.Error())
 	}
 	if acceptXML == "" {
 		resp.WriteHeader(http.StatusOK)
@@ -183,8 +181,7 @@ func getPost(c echo.Context) error {
 	} else {
 		xmlOut, err := xml.MarshalIndent(post, "", "  ")
 		if err != nil {
-			echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-			return nil
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
 		resp.WriteHeader(http.StatusOK)
 		c.Response().Header().Set("Content-Type", "application/xml")
@@ -199,6 +196,7 @@ func getPost(c echo.Context) error {
 // @Tags Posts
 // @Param title formData string true "Post title"
 // @Param body formData string true "Post body"
+// @Security ApiKeyAuth
 // @Produce json
 // @Success 200 {object} Response
 // @Failure 400 {object} ErrorResponse
@@ -207,18 +205,20 @@ func savePost(c echo.Context) error {
 	resp := c.Response()
 	var post Post
 	if err := c.Bind(&post); err != nil {
-		return err
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error)
 	}
-	post.UserID = 7
-	result := db.Create(&post)
+	user := c.Get("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	userID, _ := strconv.Atoi(claims["user_id"].(string))
+	post.UserID = userID
+	result := db.DB.Create(&post)
 	if result.Error == nil {
 		resp.WriteHeader(http.StatusCreated)
 		resp.Header().Set("Content-Type", "application/json")
 		b, _ := json.Marshal(Response{ID: post.Id, Message: "post created"})
 		resp.Write(b)
 	} else {
-		echo.NewHTTPError(http.StatusBadRequest, result.Error.Error())
-		return nil
+		return echo.NewHTTPError(http.StatusBadRequest, result.Error.Error())
 	}
 	return nil
 }
@@ -230,6 +230,7 @@ func savePost(c echo.Context) error {
 // @Param id path integer true "Post ID"
 // @Param title formData string true "Post title"
 // @Param body formData string true "Post body"
+// @Security ApiKeyAuth
 // @Produce json
 // @Success 200 {object} Post
 // @Failure 400 {object} ErrorResponse
@@ -242,21 +243,23 @@ func updatePost(c echo.Context) error {
 	post := Post{}
 	id := c.Param("id")
 	if id == "" {
-		echo.NewHTTPError(http.StatusBadRequest, `{"message": "post not found"}`)
-		return nil
+		return echo.NewHTTPError(http.StatusBadRequest, "post not found")
 	}
-	result := db.First(&post, id)
+	result := db.DB.First(&post, id)
 	if result.Error != nil {
-		echo.NewHTTPError(http.StatusBadRequest, `{"message": "post not found"}`)
-		return nil
+		return echo.NewHTTPError(http.StatusBadRequest, "post not found")
+	}
+	user := c.Get("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	userID, _ := strconv.Atoi(claims["user_id"].(string))
+	if post.UserID != userID {
 	}
 	if err := c.Bind(&post); err != nil {
-		return err
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error)
 	}
-	result = db.Save(&post)
+	result = db.DB.Save(&post)
 	if result.Error != nil {
-		echo.NewHTTPError(http.StatusBadRequest, `{"message": "post not found"}`)
-		return nil
+		return echo.NewHTTPError(http.StatusBadRequest, "post not found")
 	}
 	if acceptXML == "" {
 		resp.WriteHeader(http.StatusOK)
@@ -265,8 +268,7 @@ func updatePost(c echo.Context) error {
 	} else {
 		xmlOut, err := xml.MarshalIndent(post, "", "  ")
 		if err != nil {
-			echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-			return nil
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
 		resp.WriteHeader(http.StatusOK)
 		c.Response().Header().Set("Content-Type", "application/xml")
@@ -280,6 +282,7 @@ func updatePost(c echo.Context) error {
 // @Description Delete post.
 // @Tags Posts
 // @Param id path integer true "Post ID"
+// @Security ApiKeyAuth
 // @Produce json
 // @Success 200 {object} Response
 // @Failure 400 {object} ErrorResponse
@@ -289,18 +292,21 @@ func deletePost(c echo.Context) error {
 	var post Post
 	id := c.Param("id")
 	if id == "" {
-		echo.NewHTTPError(http.StatusBadRequest, `{"message": "post not found"}`)
-		return nil
+		return echo.NewHTTPError(http.StatusBadRequest, "post not found")
 	}
-	result := db.First(&post, id)
+	result := db.DB.First(&post, id)
 	if result.Error != nil {
-		echo.NewHTTPError(http.StatusBadRequest, result.Error.Error())
-		return nil
+		return echo.NewHTTPError(http.StatusBadRequest, result.Error.Error())
 	} else {
-		result = db.Delete(&post)
+		user := c.Get("user").(*jwt.Token)
+		claims := user.Claims.(jwt.MapClaims)
+		userID, _ := strconv.Atoi(claims["user_id"].(string))
+		if post.UserID != userID {
+			return echo.NewHTTPError(http.StatusBadRequest, "delete post not allowed")
+		}
+		result = db.DB.Delete(&post)
 		if result.Error != nil {
-			echo.NewHTTPError(http.StatusBadRequest, `{"message": "error post delete"}`)
-			return nil
+			return echo.NewHTTPError(http.StatusBadRequest, "error post delete")
 		}
 		resp.WriteHeader(http.StatusOK)
 		resp.Header().Set("Content-Type", "application/json")
@@ -319,7 +325,7 @@ func deletePost(c echo.Context) error {
 // @Produce json
 // @Produce xml
 // @Success 200 {array} []Comment
-// @Failure 500 {object} ErrorResponse
+// @Failure 400 {object} ErrorResponse
 // @Router /comments/{id} [get]
 func getComments(c echo.Context) error {
 	req := c.Request()
@@ -328,7 +334,7 @@ func getComments(c echo.Context) error {
 	postID := c.Param("id")
 	resp := c.Response()
 	var comments []Comment
-	db.Where("post_id = ?", postID).Order("id desc").Find(&comments)
+	db.DB.Where("post_id = ?", postID).Order("id desc").Find(&comments)
 	if acceptXML == "" {
 		resp.WriteHeader(http.StatusOK)
 		resp.Header().Set("Content-Type", "application/json")
@@ -336,8 +342,7 @@ func getComments(c echo.Context) error {
 	} else {
 		xmlOut, err := xml.MarshalIndent(comments, "", "  ")
 		if err != nil {
-			echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-			return nil
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
 		resp.WriteHeader(http.StatusOK)
 		c.Response().Header().Set("Content-Type", "application/xml")
@@ -354,6 +359,7 @@ func getComments(c echo.Context) error {
 // @Param name formData string true "Comment name"
 // @Param email formData string true "Comment email"
 // @Param body formData string true "Comment body"
+// @Security ApiKeyAuth
 // @Produce json
 // @Success 200 {object} Response
 // @Failure 400 {object} ErrorResponse
@@ -363,18 +369,21 @@ func saveComment(c echo.Context) error {
 	resp := c.Response()
 	var comment Comment
 	if err := c.Bind(&comment); err != nil {
-		return err
+		echo.NewHTTPError(http.StatusBadRequest, err.Error)
 	}
+	user := c.Get("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	userID, _ := strconv.Atoi(claims["user_id"].(string))
+	comment.UserID = userID
 	comment.PostID, _ = strconv.Atoi(postID)
-	result := db.Create(&comment)
+	result := db.DB.Create(&comment)
 	if result.Error == nil {
 		resp.WriteHeader(http.StatusCreated)
 		resp.Header().Set("Content-Type", "application/json")
 		b, _ := json.Marshal(Response{ID: comment.Id, Message: "comment created"})
 		resp.Write(b)
 	} else {
-		echo.NewHTTPError(http.StatusBadRequest, result.Error.Error())
-		return nil
+		return echo.NewHTTPError(http.StatusBadRequest, result.Error.Error())
 	}
 	return nil
 }
@@ -387,6 +396,7 @@ func saveComment(c echo.Context) error {
 // @Param name formData string true "Comment name"
 // @Param email formData string true "Comment email"
 // @Param body formData string true "Comment body"
+// @Security ApiKeyAuth
 // @Produce json
 // @Produce xml
 // @Success 200 {object} Comment
@@ -400,21 +410,24 @@ func updateComment(c echo.Context) error {
 	comment := Comment{}
 	id := c.Param("id")
 	if id == "" {
-		echo.NewHTTPError(http.StatusBadRequest, `{"message": "comment not found"}`)
-		return nil
+		return echo.NewHTTPError(http.StatusBadRequest, "comment not found")
 	}
-	result := db.First(&comment, id)
+	result := db.DB.First(&comment, id)
 	if result.Error != nil {
-		echo.NewHTTPError(http.StatusBadRequest, `{"message": "comment not found"}`)
-		return nil
+		return echo.NewHTTPError(http.StatusBadRequest, "comment not found")
+	}
+	user := c.Get("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	userID, _ := strconv.Atoi(claims["user_id"].(string))
+	if comment.UserID != userID {
+		return echo.NewHTTPError(http.StatusBadRequest, "edit comment not allowed")
 	}
 	if err := c.Bind(&comment); err != nil {
 		return err
 	}
-	result = db.Save(&comment)
+	result = db.DB.Save(&comment)
 	if result.Error != nil {
-		echo.NewHTTPError(http.StatusBadRequest, result.Error.Error())
-		return nil
+		return echo.NewHTTPError(http.StatusBadRequest, result.Error.Error())
 	}
 	if acceptXML == "" {
 		resp.WriteHeader(http.StatusOK)
@@ -423,8 +436,7 @@ func updateComment(c echo.Context) error {
 	} else {
 		xmlOut, err := xml.MarshalIndent(comment, "", "  ")
 		if err != nil {
-			echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-			return nil
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
 		resp.WriteHeader(http.StatusOK)
 		c.Response().Header().Set("Content-Type", "application/xml")
@@ -438,6 +450,7 @@ func updateComment(c echo.Context) error {
 // @Description Delete comment.
 // @Tags Comments
 // @Param id path integer true "Comment ID"
+// @Security ApiKeyAuth
 // @Produce json
 // @Success 200 {object} Response
 // @Failure 400 {object} ErrorResponse
@@ -447,18 +460,21 @@ func deleteComment(c echo.Context) error {
 	var comment Comment
 	id := c.Param("id")
 	if id == "" {
-		echo.NewHTTPError(http.StatusBadRequest, `{"message": "comment not found"}`)
-		return nil
+		return echo.NewHTTPError(http.StatusBadRequest, "comment not found")
 	}
-	result := db.First(&comment, id)
+	result := db.DB.First(&comment, id)
 	if result.Error != nil {
-		echo.NewHTTPError(http.StatusBadRequest, result.Error.Error())
-		return nil
+		return echo.NewHTTPError(http.StatusBadRequest, result.Error.Error())
 	} else {
-		result = db.Delete(&comment)
+		user := c.Get("user").(*jwt.Token)
+		claims := user.Claims.(jwt.MapClaims)
+		userID, _ := strconv.Atoi(claims["user_id"].(string))
+		if comment.UserID != userID {
+			return echo.NewHTTPError(http.StatusBadRequest, "delete comment not allowed")
+		}
+		result = db.DB.Delete(&comment)
 		if result.Error != nil {
-			echo.NewHTTPError(http.StatusBadRequest, `{"message": "error comment delete"}`)
-			return nil
+			return echo.NewHTTPError(http.StatusBadRequest, "error comment delete")
 		}
 		resp.WriteHeader(http.StatusOK)
 		resp.Header().Set("Content-Type", "application/json")

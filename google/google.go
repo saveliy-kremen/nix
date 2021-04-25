@@ -2,16 +2,18 @@ package fb
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
-	"strconv"
 	"strings"
 
 	auth "../auth"
+	db "../db"
 	"github.com/labstack/echo"
+	"gorm.io/gorm"
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
@@ -82,8 +84,16 @@ func HandleGoogleCallback(c echo.Context) error {
 		Name string
 	}
 	json.Unmarshal(response, &result)
-	userId, _ := strconv.Atoi(result.Id)
-	userToken := auth.CreateToken(uint32(userId), 1)
+
+	user := db.User{}
+	userResult := db.DB.Where("google_id = ?", result.Id).First(&user)
+	if errors.Is(userResult.Error, gorm.ErrRecordNotFound) {
+		user.Name = result.Name
+		user.GoogleID = result.Id
+		db.DB.Create(&user)
+	}
+
+	userToken := auth.CreateToken(user.Id, 1)
 	res := fmt.Sprintf("Name: %s\nToken: %s", result.Name, userToken)
 	return c.String(http.StatusOK, res)
 }
