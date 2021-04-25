@@ -1,6 +1,6 @@
 {
     "schemes": [
-        "http"
+        "https"
     ],
     "swagger": "2.0",
     "info": {
@@ -18,7 +18,7 @@
         },
         "version": "1.0"
     },
-    "host": "localhost:80",
+    "host": "localhost:3000",
     "basePath": "/",
     "paths": {
         "/comments/{id}": {
@@ -59,10 +59,21 @@
                                 }
                             }
                         }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/main.ErrorResponse"
+                        }
                     }
                 }
             },
             "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Update comment.",
                 "produces": [
                     "application/json",
@@ -112,12 +123,17 @@
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/main.Response"
+                            "$ref": "#/definitions/main.ErrorResponse"
                         }
                     }
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Save comment.",
                 "produces": [
                     "application/json"
@@ -162,10 +178,21 @@
                         "schema": {
                             "$ref": "#/definitions/main.Response"
                         }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/main.ErrorResponse"
+                        }
                     }
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Delete comment.",
                 "produces": [
                     "application/json"
@@ -193,13 +220,13 @@
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/main.Response"
+                            "$ref": "#/definitions/main.ErrorResponse"
                         }
                     }
                 }
             }
         },
-        "/posts": {
+        "/posts/": {
             "get": {
                 "description": "Get posts.",
                 "produces": [
@@ -230,12 +257,21 @@
                                 }
                             }
                         }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/main.ErrorResponse"
+                        }
                     }
                 }
-            }
-        },
-        "/posts/": {
+            },
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Save post.",
                 "produces": [
                     "application/json"
@@ -265,6 +301,12 @@
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/main.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/main.ErrorResponse"
                         }
                     }
                 }
@@ -302,10 +344,21 @@
                         "schema": {
                             "$ref": "#/definitions/main.Post"
                         }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/main.ErrorResponse"
+                        }
                     }
                 }
             },
             "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Update post.",
                 "produces": [
                     "application/json"
@@ -353,6 +406,11 @@
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Delete post.",
                 "produces": [
                     "application/json"
@@ -405,6 +463,9 @@
                 },
                 "postId": {
                     "type": "integer"
+                },
+                "userId": {
+                    "type": "integer"
                 }
             }
         },
@@ -413,9 +474,6 @@
             "properties": {
                 "message": {
                     "type": "string"
-                },
-                "status": {
-                    "type": "integer"
                 }
             }
         },
@@ -446,6 +504,13 @@
                     "type": "string"
                 }
             }
+        }
+    },
+    "securityDefinitions": {
+        "ApiKeyAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
         }
     }
 }

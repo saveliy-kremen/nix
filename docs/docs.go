@@ -70,10 +70,21 @@ var doc = `{
                                 }
                             }
                         }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/main.ErrorResponse"
+                        }
                     }
                 }
             },
             "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Update comment.",
                 "produces": [
                     "application/json",
@@ -123,12 +134,17 @@ var doc = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/main.Response"
+                            "$ref": "#/definitions/main.ErrorResponse"
                         }
                     }
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Save comment.",
                 "produces": [
                     "application/json"
@@ -173,10 +189,21 @@ var doc = `{
                         "schema": {
                             "$ref": "#/definitions/main.Response"
                         }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/main.ErrorResponse"
+                        }
                     }
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Delete comment.",
                 "produces": [
                     "application/json"
@@ -204,13 +231,13 @@ var doc = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/main.Response"
+                            "$ref": "#/definitions/main.ErrorResponse"
                         }
                     }
                 }
             }
         },
-        "/posts": {
+        "/posts/": {
             "get": {
                 "description": "Get posts.",
                 "produces": [
@@ -241,12 +268,21 @@ var doc = `{
                                 }
                             }
                         }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/main.ErrorResponse"
+                        }
                     }
                 }
-            }
-        },
-        "/posts/": {
+            },
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Save post.",
                 "produces": [
                     "application/json"
@@ -276,6 +312,12 @@ var doc = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/main.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/main.ErrorResponse"
                         }
                     }
                 }
@@ -313,10 +355,21 @@ var doc = `{
                         "schema": {
                             "$ref": "#/definitions/main.Post"
                         }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/main.ErrorResponse"
+                        }
                     }
                 }
             },
             "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Update post.",
                 "produces": [
                     "application/json"
@@ -364,6 +417,11 @@ var doc = `{
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Delete post.",
                 "produces": [
                     "application/json"
@@ -416,6 +474,9 @@ var doc = `{
                 },
                 "postId": {
                     "type": "integer"
+                },
+                "userId": {
+                    "type": "integer"
                 }
             }
         },
@@ -424,9 +485,6 @@ var doc = `{
             "properties": {
                 "message": {
                     "type": "string"
-                },
-                "status": {
-                    "type": "integer"
                 }
             }
         },
@@ -458,6 +516,13 @@ var doc = `{
                 }
             }
         }
+    },
+    "securityDefinitions": {
+        "ApiKeyAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
     }
 }`
 
@@ -473,9 +538,9 @@ type swaggerInfo struct {
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = swaggerInfo{
 	Version:     "1.0",
-	Host:        "localhost:80",
+	Host:        "localhost:3000",
 	BasePath:    "/",
-	Schemes:     []string{"http"},
+	Schemes:     []string{"https"},
 	Title:       "Echo Swagger API",
 	Description: "This is a echo post + comments server.",
 }
