@@ -104,8 +104,8 @@ func main() {
 
 	e.GET("/swagger/*", echoSwagger.WrapHandler)
 
+	//e.Logger.Fatal(e.Start(":3000"))
 	e.Logger.Fatal(e.StartTLS(":3000", "cert/localhost.crt", "cert/localhost.key"))
-	//https://golangexample.com/automatically-generate-restful-api-documentation-with-swagger-2-0-for-go/
 }
 
 func handleAuth(c echo.Context) error {
